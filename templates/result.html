@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Result — NeuraScan AI</title>
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#050b14;color:#dde4f0;font-family:system-ui,-apple-system,sans-serif;min-height:100vh}
+a{color:inherit;text-decoration:none}
+
+nav{background:#07111f;border-bottom:1px solid #1a2a3a;padding:0 24px}
+.nav-wrap{max-width:1100px;margin:0 auto;height:58px;display:flex;align-items:center;justify-content:space-between}
+.brand{font-size:19px;font-weight:700;color:#38b2ff;display:flex;align-items:center;gap:9px}
+.dot{width:9px;height:9px;border-radius:50%;background:#38b2ff;box-shadow:0 0 8px #38b2ff}
+.nav-btns{display:flex;gap:10px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid #1a2a3a;background:transparent;color:#dde4f0;transition:.2s;font-family:inherit}
+.btn:hover{border-color:rgba(56,178,255,.4);color:#38b2ff}
+.btn-g{background:rgba(45,220,130,.08);border-color:rgba(45,220,130,.3);color:#2ddc82}
+.btn-g:hover{background:rgba(45,220,130,.15)}
+
+.page{max-width:1100px;margin:0 auto;padding:36px 24px}
+
+/* RESULT HEADER */
+.rh{background:#07111f;border:1px solid #1a2a3a;border-radius:16px;padding:22px 26px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;position:relative;overflow:hidden}
+.rh::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#38b2ff,#2ddc82,#b084ff)}
+.rh-ey{font-size:11px;font-family:monospace;color:#7a8fa6;margin-bottom:5px}
+.rh-pred{font-size:28px;font-weight:800;letter-spacing:-1px;margin-bottom:5px}
+.rh-sub{font-size:13px;color:#7a8fa6;max-width:380px;line-height:1.5}
+.metrics{display:flex;gap:12px;flex-wrap:wrap}
+.met{background:#050b14;border:1px solid #1a2a3a;border-radius:9px;padding:11px 16px;text-align:center;min-width:84px}
+.met-v{font-size:20px;font-weight:800}
+.met-l{font-size:11px;font-family:monospace;color:#7a8fa6;margin-top:2px}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:1fr 360px;gap:18px}
+
+/* PANEL */
+.panel{background:#07111f;border:1px solid #1a2a3a;border-radius:12px;padding:18px;margin-bottom:16px}
+.pt{font-size:14px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:7px}
+.pt::before{content:'';width:3px;height:13px;background:#38b2ff;border-radius:2px;flex-shrink:0}
+
+/* IMAGE GRID */
+.img-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.icard{background:#07111f;border:1px solid #1a2a3a;border-radius:10px;overflow:hidden}
+.icard-hd{padding:8px 12px;border-bottom:1px solid #1a2a3a;display:flex;justify-content:space-between;font-size:11px;font-family:monospace;color:#7a8fa6}
+.icard-hd span:last-child{color:#38b2ff}
+.icard img{width:100%;height:170px;object-fit:contain;background:#050b14;display:block}
+.icard-ft{padding:7px 12px;font-size:11px;color:#7a8fa6}
+
+/* PROB BARS */
+.pb-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.pb-lbl{font-size:13px;min-width:110px;color:#7a8fa6}
+.pb-lbl.b{color:#dde4f0;font-weight:500}
+.pb-track{flex:1;height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
+.pb-fill{height:100%;border-radius:3px;width:0;transition:width 1.1s ease}
+.pb-pct{font-size:12px;font-family:monospace;min-width:40px;text-align:right}
+
+/* RIGHT COLUMN */
+.risk-card{background:#07111f;border:1px solid #1a2a3a;border-radius:12px;padding:18px;margin-bottom:12px;position:relative;overflow:hidden}
+.risk-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px}
+.rc-high::after{background:#ff5060}
+.rc-med::after{background:#ffb030}
+.rc-low::after{background:#2ddc82}
+.ri{font-size:30px;margin-bottom:7px}
+.rname{font-size:16px;font-weight:700;margin-bottom:5px}
+.rbadge{font-size:11px;font-family:monospace;padding:3px 10px;border-radius:20px;display:inline-block;margin-bottom:8px}
+.rb-h{background:rgba(255,80,96,.12);color:#ff5060;border:1px solid rgba(255,80,96,.3)}
+.rb-m{background:rgba(255,176,48,.12);color:#ffb030;border:1px solid rgba(255,176,48,.3)}
+.rb-l{background:rgba(45,220,130,.12);color:#2ddc82;border:1px solid rgba(45,220,130,.3)}
+.rdesc{font-size:13px;color:#7a8fa6;line-height:1.6}
+
+.pcard{background:#07111f;border:1px solid #1a2a3a;border-radius:12px;padding:14px 18px;margin-bottom:12px}
+.prow{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #1a2a3a;font-size:13px}
+.prow:last-child{border:none}
+.prow span:first-child{color:#7a8fa6;font-family:monospace;font-size:11px}
+.prow span:last-child{font-weight:500}
+
+.abtns{display:flex;flex-direction:column;gap:9px;margin-bottom:12px}
+.abtn{width:100%;padding:11px;background:#050b14;border:1px solid #1a2a3a;border-radius:9px;color:#dde4f0;font-size:13px;font-weight:500;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;gap:7px;text-decoration:none;font-family:inherit}
+.abtn:hover{border-color:rgba(56,178,255,.35);color:#38b2ff;background:rgba(56,178,255,.05)}
+.abtn.g{border-color:rgba(45,220,130,.3);color:#2ddc82}
+.abtn.g:hover{background:rgba(45,220,130,.06)}
+
+/* CHATBOT */
+.chat-wrap{background:#07111f;border:1px solid #1a2a3a;border-radius:12px;overflow:hidden;margin-bottom:12px}
+.chat-hd{padding:12px 15px;border-bottom:1px solid #1a2a3a;display:flex;align-items:center;gap:9px}
+.c-av{width:30px;height:30px;border-radius:50%;background:rgba(56,178,255,.15);border:1px solid rgba(56,178,255,.3);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.c-nm{font-size:13px;font-weight:500}
+.c-st{font-size:11px;color:#2ddc82;font-family:monospace}
+.c-msgs{padding:13px;display:flex;flex-direction:column;gap:8px;max-height:260px;overflow-y:auto;min-height:80px}
+.msg{max-width:90%;padding:9px 12px;border-radius:9px;font-size:13px;line-height:1.55}
+.ai-msg{background:#050b14;border:1px solid #1a2a3a;border-radius:9px 9px 9px 2px;align-self:flex-start}
+.u-msg{background:rgba(56,178,255,.1);border:1px solid rgba(56,178,255,.2);border-radius:9px 9px 2px 9px;align-self:flex-end}
+.t-msg span{display:inline-block;width:5px;height:5px;border-radius:50%;background:#7a8fa6;margin:0 2px;animation:td 1.4s infinite}
+.t-msg span:nth-child(2){animation-delay:.2s}
+.t-msg span:nth-child(3){animation-delay:.4s}
+@keyframes td{0%,80%,100%{opacity:.3;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+.qqs{padding:0 13px 10px;display:flex;flex-wrap:wrap;gap:5px}
+.qq{font-size:11px;padding:4px 9px;border-radius:14px;background:#050b14;border:1px solid #1a2a3a;color:#7a8fa6;cursor:pointer;transition:.2s;font-family:monospace}
+.qq:hover{border-color:rgba(56,178,255,.3);color:#38b2ff}
+.c-inp-row{padding:10px 13px;border-top:1px solid #1a2a3a;display:flex;gap:7px}
+.c-inp{flex:1;background:#050b14;border:1px solid #1a2a3a;border-radius:7px;padding:8px 11px;color:#dde4f0;font-size:13px;outline:none;transition:.2s;font-family:inherit}
+.c-inp:focus{border-color:rgba(56,178,255,.4)}
+.c-send{width:33px;height:33px;background:#38b2ff;border:none;border-radius:7px;color:#050b14;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.c-send:hover{opacity:.85}
+
+.disc{background:rgba(255,80,90,.05);border:1px solid rgba(255,80,90,.15);border-radius:9px;padding:12px 15px;font-size:13px;color:#7a8fa6;line-height:1.5}
+
+footer{border-top:1px solid #1a2a3a;padding:16px 24px;text-align:center;color:#7a8fa6;font-size:13px;margin-top:32px}
+footer b{color:#38b2ff}
+.credit{margin-top:6px;font-size:12px;color:#7a8fa6}
+.credit span{color:#38b2ff;font-weight:600}
+
+.mods{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.mbox{background:#050b14;border:1px solid #1a2a3a;border-radius:8px;padding:11px;text-align:center}
+.mbox-n{font-size:13px;font-weight:600;margin-bottom:3px}
+.mbox-t{font-size:11px;font-family:monospace;color:#2ddc82}
+
+.leg{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:9px;padding-top:9px;border-top:1px solid #1a2a3a}
+.leg-bar{height:8px;flex:1;border-radius:4px;background:linear-gradient(90deg,#00f,#0ff,#0f0,#ff0,#f00);min-width:80px}
+.leg-lbl{display:flex;justify-content:space-between;flex:1;font-size:11px;font-family:monospace;color:#7a8fa6}
+
+@media(max-width:860px){.layout{grid-template-columns:1fr}}
+@media(max-width:600px){.img-grid{grid-template-columns:1fr 1fr}.page{padding:20px 14px}}
+@media(max-width:380px){.img-grid{grid-template-columns:1fr}}
+
+.confidence-color {
+    color: #38b2ff;
+}
+
+.attention-color {
+    color: #ffb030;
+}
+
+.risk-high {
+    color: #ff5060;
+}
+
+.risk-medium {
+    color: #ffb030;
+}
+
+.risk-low {
+    color: #2ddc82;
+}
+
+.pb-glioma{
+    background:#ff5060;
+}
+
+.pb-meningioma{
+    background:#ffb030;
+}
+
+.pb-notumor{
+    background:#2ddc82;
+}
+
+.pb-pituitary{
+    background:#b084ff;
+}
+
+.pb-pct{
+    color:#7a8fa6;
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-wrap">
+    <div class="brand"><span class="dot"></span>NeuraScan AI</div>
+    <div class="nav-btns">
+      <a href="/" class="btn">🔄 New Scan</a>
+      <a href="/download/{{ report_file }}" class="btn btn-g">📄 Download PDF</a>
+    </div>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- RESULT HEADER -->
+  <div class="rh">
+    <div>
+      <div class="rh-ey">Analysis Complete · {{ timestamp }}</div>
+      <div class="rh-pred">{{ result.display_name }}</div>
+      <div class="rh-sub">{{ result.description }}</div>
+    </div>
+
+    <div class="metrics">
+
+    <div class="met">
+        <div class="met-v confidence-color">
+            {{ result.confidence }}%
+        </div>
+        <div class="met-l">confidence</div>
+    </div>
+
+    <div class="met">
+        {% if result.risk_level == 'High' %}
+            <div class="met-v risk-high">{{ result.risk_level }}</div>
+        {% elif result.risk_level == 'Medium' %}
+            <div class="met-v risk-medium">{{ result.risk_level }}</div>
+        {% else %}
+            <div class="met-v risk-low">{{ result.risk_level }}</div>
+        {% endif %}
+        <div class="met-l">risk level</div>
+    </div>
+
+    {% if result.pred_class != 'notumor' %}
+    <div class="met">
+        <div class="met-v attention-color">
+            {{ result.area_pct }}%
+        </div>
+        <div class="met-l">attention area</div>
+    </div>
+    {% endif %}
+
+</div>
+  </div>
+
+  <div class="layout">
+
+    <!-- LEFT -->
+    <div>
+      <!-- Images -->
+      <div class="img-grid">
+        <div class="icard">
+          <div class="icard-hd"><span>Original MRI</span><span>Input</span></div>
+          <img src="/static/uploads/{{ img_filename }}" alt="Original MRI">
+          <div class="icard-ft">{{ patient_name }}</div>
+        </div>
+        {% if heatmap_file %}
+        <div class="icard">
+          <div class="icard-hd">
+            <span>{{ 'Model Attention' if result.pred_class == 'notumor' else 'Grad-CAM Heatmap' }}</span>
+            <span>XAI</span>
+          </div>
+          <img src="/static/gradcam/{{ heatmap_file }}" alt="Heatmap">
+          <div class="icard-ft">{{ 'Regions influencing "No Tumour" call' if result.pred_class == 'notumor' else 'Attention regions' }}</div>
+        </div>
+        {% endif %}
+        {% if overlay_file %}
+        <div class="icard">
+          <div class="icard-hd">
+            <span>{{ 'Model Attention (No Tumour)' if result.pred_class == 'notumor' else 'Overlay' }}</span>
+            <span>Blended</span>
+          </div>
+          <img src="/static/gradcam/{{ overlay_file }}" alt="Overlay">
+          <div class="icard-ft">MRI + heatmap</div>
+        </div>
+        {% endif %}
+      </div>
+      {% if result.pred_class == 'notumor' and (heatmap_file or overlay_file) %}
+      <p style="font-size:12px;color:#7a8fa6;margin:-6px 0 16px;line-height:1.5">
+        Note: this heatmap shows the regions that most influenced the "No Tumour" prediction, not a tumour location.
+        Highlighted areas reflect overall scan features the model associated with a normal/healthy appearance.
+      </p>
+      {% endif %}
+
+      <!-- Probabilities -->
+<div class="panel">
+    <div class="pt">Class Probabilities — Ensemble Output</div>
+
+    {% set colors = {
+        'glioma': '#ff5060',
+        'meningioma': '#ffb030',
+        'notumor': '#2ddc82',
+        'pituitary': '#b084ff'
+    } %}
+
+    {% set names = {
+        'glioma': 'Glioma',
+        'meningioma': 'Meningioma',
+        'notumor': 'No Tumour',
+        'pituitary': 'Pituitary'
+    } %}
+
+    {% for cls, prob in sorted_probs %}
+    <div class="pb-row">
+
+        <span class="pb-lbl {% if cls == result.pred_class %}b{% endif %}">
+            {% if cls == result.pred_class %}→ {% endif %}
+            {{ names.get(cls, cls) }}
+        </span>
+
+        <div class="pb-track">
+    <div
+        class="pb-fill
+        {% if cls == 'glioma' %} pb-glioma
+        {% elif cls == 'meningioma' %} pb-meningioma
+        {% elif cls == 'notumor' %} pb-notumor
+        {% else %} pb-pituitary
+        {% endif %}"
+        data-w="{{ (prob * 100) | round(1) }}">
+    </div>
+</div>
+
+<span class="pb-pct">
+    {{ (prob * 100) | round(1) }}%
+</span>
+    </div>
+    {% endfor %}
+
+    <div class="leg">
+        <span style="font-size:11px; font-family:monospace; color:#7a8fa6;">
+            Heatmap:
+        </span>
+
+        <div class="leg-bar"></div>
+
+        <div class="leg-lbl">
+            <span>Low</span>
+            <span>High</span>
+        </div>
+    </div>
+</div>
+
+      <!-- Models -->
+      <div class="panel">
+        <div class="pt">Ensemble Configuration</div>
+        <div class="mods">
+          {% for m in result.models_used %}
+          <div class="mbox">
+            <div class="mbox-n">{{ m.upper() }}</div>
+            <div class="mbox-t">✓ Active</div>
+          </div>
+          {% endfor %}
+        </div>
+        <p style="font-size:13px;color:#7a8fa6;margin-top:12px;line-height:1.6">
+          Soft-voting: final prediction = average of {{ result.models_used | length }} softmax outputs.
+        </p>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div>
+      <!-- Risk -->
+      <div class="risk-card {{ 'rc-high' if result.risk_level == 'High' else 'rc-med' if result.risk_level == 'Medium' else 'rc-low' }}">
+        <div class="ri">{{ result.risk_icon }}</div>
+        <div class="rname">{{ result.display_name }}</div>
+        <div class="rbadge {{ 'rb-h' if result.risk_level == 'High' else 'rb-m' if result.risk_level == 'Medium' else 'rb-l' }}">
+          {{ result.risk_level }} Risk
+        </div>
+        <div class="rdesc">{{ result.description }}</div>
+      </div>
+
+      <!-- Patient -->
+      <div class="pcard">
+        <div class="pt">Patient Details</div>
+        <div class="prow"><span>NAME</span><span>{{ patient_name }}</span></div>
+        <div class="prow"><span>ID</span><span>{{ patient_id }}</span></div>
+        <div class="prow"><span>DATE</span><span>{{ timestamp }}</span></div>
+        <div class="prow"><span>MODELS</span><span>{{ result.models_used | join(', ') }}</span></div>
+      </div>
+
+      <!-- Actions -->
+      <div class="abtns">
+        <a href="/download/{{ report_file }}" class="abtn g">📄 Download PDF Report</a>
+        <button class="abtn" onclick="copySummary()">📋 Copy Summary</button>
+        <a href="/" class="abtn">🔄 Analyse Another Scan</a>
+      </div>
+
+      <!-- Chatbot -->
+      <div class="chat-wrap">
+        <div class="chat-hd">
+          <div class="c-av">🤖</div>
+          <div>
+            <div class="c-nm">NeuraScan Assistant</div>
+            <div class="c-st">● Online</div>
+          </div>
+        </div>
+        <div class="c-msgs" id="msgs">
+          <div class="msg ai-msg">
+            Analysis complete! Detected <strong>{{ result.display_name }}</strong>
+            with <strong>{{ result.confidence }}%</strong> confidence
+            ({{ result.risk_level }} risk). Ask me anything. 🧠
+          </div>
+        </div>
+        <div class="qqs">
+          <div class="qq" onclick="ask('What is {{ result.display_name.lower() }}?')">What is {{ result.display_name.lower() }}?</div>
+          <div class="qq" onclick="ask('What does {{ result.risk_level }} risk mean?')">{{ result.risk_level }} risk meaning</div>
+          <div class="qq" onclick="ask('What should I do next?')">What to do?</div>
+          <div class="qq" onclick="ask('How accurate is this AI?')">How accurate?</div>
+        </div>
+        <div class="c-inp-row">
+          <input class="c-inp" id="cin" type="text" placeholder="Ask about your result..."
+                 onkeypress="if(event.key==='Enter')send()">
+          <button class="c-send" onclick="send()">➤</button>
+        </div>
+      </div>
+
+      <div class="disc">
+        <strong style="color:#dde4f0">⚠️ Disclaimer:</strong>
+        This result is for <strong style="color:#dde4f0">research and educational purposes only</strong>.
+        Not a clinical diagnosis. Consult a qualified neurologist before any medical decision.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  © 2026 <b>NeuraScan AI</b> · Trimester 8 Project · For Academic Use Only
+  <div class="credit">Developed by <span>Sanghita Roy</span></div>
+</footer>
+
+<script>
+// Animate probability bars on load
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.querySelectorAll('.pb-fill').forEach(b => {
+      b.style.width = (b.dataset.w || 0) + '%';
+    });
+  }, 200);
+});
+
+// Copy summary
+function copySummary() {
+  const t =
+    'NeuraScan AI Result\n' +
+    'Prediction : {{ result.display_name }}\n' +
+    'Confidence : {{ result.confidence }}%\n' +
+    'Risk       : {{ result.risk_level }}\n' +
+    'Patient    : {{ patient_name }} ({{ patient_id }})\n' +
+    'Date       : {{ timestamp }}\n' +
+    'NOTE: Research use only. Consult a neurologist.';
+  navigator.clipboard.writeText(t).then(() => alert('Copied!')).catch(() => alert('Copy manually.'));
+}
+
+// Chatbot
+const CTX = {
+  pred_class: "{{ result.pred_class }}",
+  confidence: Number("{{ result.confidence }}"),
+  risk: "{{ result.risk_level }}",
+  area: Number("{{ result.area_pct|default(0) }}")
+};
+
+function addMsg(html, cls) {
+  const el = document.createElement('div');
+  el.className = 'msg ' + cls;
+  el.innerHTML = html;
+  const box = document.getElementById('msgs');
+  box.appendChild(el);
+  box.scrollTop = box.scrollHeight;
+  return el;
+}
+
+function ask(q) { document.getElementById('cin').value = q; send(); }
+
+async function send() {
+  const inp = document.getElementById('cin');
+  const q   = inp.value.trim();
+  if (!q) return;
+  inp.value = '';
+  addMsg(q, 'msg u-msg');
+  const t = addMsg('<span></span><span></span><span></span>', 'msg ai-msg t-msg');
+  try {
+    const r = await fetch('/chat', {
+      method  : 'POST',
+      headers : {'Content-Type': 'application/json'},
+      body    : JSON.stringify({question: q, context: CTX}),
+    });
+    const d = await r.json();
+    t.remove();
+    addMsg(d.reply.replace(/\n/g, '<br>'), 'msg ai-msg');
+  } catch {
+    t.remove();
+    addMsg('Connection error. Is the Flask server running?', 'msg ai-msg');
+  }
+}
+</script>
+</body>
+</html>

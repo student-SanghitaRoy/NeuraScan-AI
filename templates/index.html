@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NeuraScan AI</title>
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#050b14;color:#dde4f0;font-family:system-ui,-apple-system,sans-serif;min-height:100vh}
+
+/* NAV */
+nav{background:#07111f;border-bottom:1px solid #1a2a3a;padding:0 24px}
+.nav-wrap{max-width:1000px;margin:0 auto;height:58px;display:flex;align-items:center;justify-content:space-between}
+.brand{font-size:19px;font-weight:700;color:#38b2ff;display:flex;align-items:center;gap:9px}
+.dot{width:9px;height:9px;border-radius:50%;background:#38b2ff;box-shadow:0 0 8px #38b2ff;animation:blink 2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.nav-pill{font-size:12px;font-family:monospace;background:rgba(56,178,255,.1);border:1px solid rgba(56,178,255,.25);color:#38b2ff;padding:4px 12px;border-radius:20px}
+
+/* PAGE */
+.page{max-width:1000px;margin:0 auto;padding:44px 24px}
+
+/* HERO */
+.hero{text-align:center;margin-bottom:40px}
+.hero-tag{display:inline-block;font-size:12px;font-family:monospace;color:#38b2ff;background:rgba(56,178,255,.08);border:1px solid rgba(56,178,255,.2);padding:4px 14px;border-radius:20px;margin-bottom:14px}
+.hero h1{font-size:clamp(30px,5vw,52px);font-weight:800;letter-spacing:-1.5px;margin-bottom:12px;line-height:1.1}
+.hero h1 em{color:#38b2ff;font-style:normal}
+.hero p{color:#7a8fa6;font-size:16px;max-width:500px;margin:0 auto}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid #1a2a3a;border-radius:12px;overflow:hidden;margin-bottom:32px;background:#1a2a3a}
+.stat{background:#07111f;padding:16px;text-align:center}
+.stat-n{font-size:24px;font-weight:800;color:#38b2ff}
+.stat-l{font-size:11px;color:#7a8fa6;font-family:monospace;margin-top:2px}
+
+/* ERROR */
+.err{background:rgba(255,80,90,.08);border:1px solid rgba(255,80,90,.3);border-radius:8px;padding:12px 16px;color:#ff505a;font-size:14px;margin-bottom:20px}
+
+/* CARD */
+.card{background:#07111f;border:1px solid #1a2a3a;border-radius:16px;overflow:hidden;margin-bottom:24px}
+.card-hd{padding:16px 24px;border-bottom:1px solid #1a2a3a;display:flex;align-items:center;gap:10px}
+.card-hd h2{font-size:16px;font-weight:600}
+.badge{font-size:11px;font-family:monospace;background:rgba(56,178,255,.1);border:1px solid rgba(56,178,255,.25);color:#38b2ff;padding:3px 10px;border-radius:20px}
+.card-body{padding:24px;display:grid;grid-template-columns:1fr 1fr;gap:24px}
+
+/* DROP ZONE */
+.drop{border:2px dashed #1a2a3a;border-radius:12px;padding:40px 16px;text-align:center;cursor:pointer;background:#050b14;transition:.2s;position:relative;min-height:280px;display:flex;align-items:center;justify-content:center}
+.drop:hover{border-color:rgba(56,178,255,.5);background:rgba(56,178,255,.03)}
+.drop.over{border-color:rgba(56,178,255,.6);background:rgba(56,178,255,.05)}
+.drop.loaded{border-style:solid;border-color:rgba(45,220,130,.4);background:rgba(45,220,130,.03)}
+#fi{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.drop-inner{pointer-events:none}
+.di{font-size:40px;margin-bottom:10px}
+.dt{font-size:15px;font-weight:500;margin-bottom:5px}
+.ds{font-size:13px;color:#7a8fa6;margin-bottom:16px}
+.dbtn{display:inline-block;padding:8px 18px;font-size:13px;font-weight:500;border-radius:8px;background:rgba(56,178,255,.1);border:1px solid rgba(56,178,255,.3);color:#38b2ff}
+.tags{display:flex;gap:6px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+.tag{font-size:11px;font-family:monospace;padding:3px 8px;border-radius:5px;background:rgba(255,255,255,.05);border:1px solid #1a2a3a;color:#7a8fa6}
+.prev{display:none;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
+.prev img{max-width:100%;max-height:200px;border-radius:10px;object-fit:contain}
+.prev-name{font-size:12px;font-family:monospace;color:#7a8fa6}
+.chg{font-size:12px;color:#38b2ff;cursor:pointer;background:none;border:none;font-family:inherit;text-decoration:underline;pointer-events:all}
+
+/* FORM */
+.form-col{display:flex;flex-direction:column;gap:14px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fg label{display:block;font-size:11px;font-family:monospace;color:#7a8fa6;margin-bottom:5px;letter-spacing:.04em}
+.inp,.sel{width:100%;padding:9px 12px;font-size:14px;background:#050b14;border:1px solid #1a2a3a;border-radius:8px;color:#dde4f0;font-family:inherit;outline:none;transition:.2s;appearance:none;-webkit-appearance:none}
+.inp:focus,.sel:focus{border-color:rgba(56,178,255,.5)}
+.opts{background:#050b14;border:1px solid #1a2a3a;border-radius:9px;padding:13px 15px}
+.opts-title{font-size:11px;font-family:monospace;color:#7a8fa6;margin-bottom:9px;letter-spacing:.05em}
+.opt{display:flex;align-items:center;gap:8px;font-size:13px;color:#7a8fa6;margin-bottom:7px;cursor:pointer}
+.opt:last-child{margin-bottom:0}
+.opt input{accent-color:#38b2ff;width:14px;height:14px;cursor:pointer;flex-shrink:0}
+.opt:hover{color:#dde4f0}
+.sub{width:100%;padding:13px;font-size:15px;font-weight:700;background:#38b2ff;color:#050b14;border:none;border-radius:10px;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit}
+.sub:hover:not(:disabled){opacity:.88;transform:translateY(-1px)}
+.sub:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+/* HOW IT WORKS */
+.how h3{font-size:18px;font-weight:700;text-align:center;margin-bottom:18px}
+.how-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.how-card{background:#07111f;border:1px solid #1a2a3a;border-radius:12px;padding:18px 14px;text-align:center}
+.how-n{font-size:11px;font-family:monospace;color:#38b2ff;margin-bottom:8px}
+.how-i{font-size:24px;margin-bottom:7px}
+.how-t{font-size:13px;font-weight:600;margin-bottom:4px}
+.how-d{font-size:12px;color:#7a8fa6;line-height:1.5}
+
+/* DISC */
+.disc{background:rgba(255,80,90,.05);border:1px solid rgba(255,80,90,.15);border-radius:9px;padding:12px 16px;margin-top:28px;font-size:13px;color:#7a8fa6;display:flex;gap:10px;line-height:1.5}
+
+/* LOADING */
+.ld{display:none;position:fixed;inset:0;background:rgba(5,11,20,.92);z-index:999;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.ld.on{display:flex}
+.spin{width:50px;height:50px;border:2px solid #1a2a3a;border-top-color:#38b2ff;border-radius:50%;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.ld h3{font-size:17px;font-weight:600}
+.ld-steps{display:flex;flex-direction:column;gap:6px}
+.ls{font-size:13px;font-family:monospace;color:#7a8fa6;opacity:.3;transition:.3s}
+.ls.a{opacity:1;color:#38b2ff}
+.ls.d{opacity:1;color:#2ddc82}
+
+footer{border-top:1px solid #1a2a3a;padding:18px 24px;text-align:center;color:#7a8fa6;font-size:13px;margin-top:32px}
+footer b{color:#38b2ff}
+.credit{margin-top:6px;font-size:12px;color:#7a8fa6}
+.credit span{color:#38b2ff;font-weight:600}
+
+@media(max-width:760px){.card-body,.row2{grid-template-columns:1fr}.how-grid{grid-template-columns:repeat(2,1fr)}.stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:400px){.how-grid,.stats{grid-template-columns:1fr}.page{padding:24px 14px}}
+</style>
+</head>
+<body>
+
+<div class="ld" id="ld">
+  <div class="spin"></div>
+  <h3>Analysing your MRI scan...</h3>
+  <div class="ld-steps">
+    <div class="ls" id="s1">◦ Preprocessing image (96×96)</div>
+    <div class="ls" id="s2">◦ VGG16 inference</div>
+    <div class="ls" id="s3">◦ ResNet50 inference</div>
+    <div class="ls" id="s4">◦ EfficientNetB0 inference</div>
+    <div class="ls" id="s5">◦ Ensemble soft-voting</div>
+    <div class="ls" id="s6">◦ Generating Grad-CAM heatmap</div>
+    <div class="ls" id="s7">◦ Estimating attention area</div>
+    <div class="ls" id="s8">◦ Building PDF report</div>
+  </div>
+</div>
+
+<nav>
+  <div class="nav-wrap">
+    <div class="brand"><span class="dot"></span>NeuraScan AI</div>
+    <span class="nav-pill">Brain Tumour Detection</span>
+  </div>
+</nav>
+
+<div class="page">
+
+  <div class="hero">
+    <div class="hero-tag">Deep Learning · Medical AI · Trimester 8 Project</div>
+    <h1>Brain Tumour Detection<br>with <em>AI Precision</em></h1>
+    <p>Upload a brain MRI scan and receive an instant ensemble AI diagnosis with Grad-CAM explainability and a downloadable PDF report.</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-n">97.4%</div><div class="stat-l">accuracy</div></div>
+    <div class="stat"><div class="stat-n">3</div><div class="stat-l">AI models</div></div>
+    <div class="stat"><div class="stat-n">4</div><div class="stat-l">classes</div></div>
+    <div class="stat"><div class="stat-n">&lt;10s</div><div class="stat-l">analysis</div></div>
+  </div>
+
+  {% if error %}
+  <div class="err">⚠️ {{ error }}</div>
+  {% endif %}
+
+  <form id="frm" method="POST" action="/predict" enctype="multipart/form-data">
+    <div class="card">
+      <div class="card-hd">
+        <span class="badge">Step 1</span>
+        <h2>Upload MRI Scan + Patient Details</h2>
+      </div>
+      <div class="card-body">
+
+        <div class="drop" id="dz">
+          <input type="file" id="fi" name="mri_file" accept=".jpg,.jpeg,.png,.bmp" required>
+          <div class="drop-inner" id="dc">
+            <div class="di">🧠</div>
+            <div class="dt">Drop your MRI scan here</div>
+            <div class="ds">Drag &amp; drop or click to browse</div>
+            <div class="dbtn">Browse File</div>
+            <div class="tags">
+              <span class="tag">JPG</span>
+              <span class="tag">PNG</span>
+              <span class="tag">JPEG</span>
+              <span class="tag">Max 16MB</span>
+            </div>
+          </div>
+          <div class="prev" id="pv">
+            <img id="pi" src="" alt="preview">
+            <div class="prev-name" id="pn"></div>
+            <button type="button" class="chg" id="chgBtn">Change file</button>
+          </div>
+        </div>
+
+        <div class="form-col">
+          <div class="row2">
+            <div class="fg">
+              <label>PATIENT NAME</label>
+              <input class="inp" type="text" name="patient_name" value="Anonymous">
+            </div>
+            <div class="fg">
+              <label>PATIENT ID</label>
+              <input class="inp" type="text" name="patient_id" value="PT-001">
+            </div>
+          </div>
+          <div class="row2">
+            <div class="fg">
+              <label>AGE</label>
+              <input class="inp" type="number" name="age" placeholder="35" min="1" max="120">
+            </div>
+            <div class="fg">
+              <label>GENDER</label>
+              <select class="sel" name="gender">
+                <option>Not specified</option>
+                <option>Male</option>
+                <option>Female</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="fg">
+            <label>SCAN TYPE</label>
+            <select class="sel" name="scan_type">
+              <option>T1-weighted MRI</option>
+              <option>T2-weighted MRI</option>
+              <option>FLAIR MRI</option>
+              <option>Contrast-enhanced MRI</option>
+              <option>Unknown</option>
+            </select>
+          </div>
+          <div class="opts">
+            <div class="opts-title">OUTPUT OPTIONS</div>
+            <label class="opt"><input type="checkbox" name="opt_gradcam" checked> Show Grad-CAM heatmap</label>
+            <label class="opt"><input type="checkbox" name="opt_risk" checked> Show risk level</label>
+            <label class="opt"><input type="checkbox" name="opt_pdf" checked> Generate PDF report</label>
+          </div>
+          <button type="submit" class="sub" id="sb" disabled>🔍 Analyse MRI Scan</button>
+        </div>
+
+      </div>
+    </div>
+  </form>
+
+  <div class="how">
+    <h3>How it works</h3>
+    <div class="how-grid">
+      <div class="how-card"><div class="how-n">01</div><div class="how-i">🖼️</div><div class="how-t">Upload MRI</div><div class="how-d">Any JPG/PNG brain MRI scan.</div></div>
+      <div class="how-card"><div class="how-n">02</div><div class="how-i">⚡</div><div class="how-t">AI Analyses</div><div class="how-d">3 models soft-vote the result.</div></div>
+      <div class="how-card"><div class="how-n">03</div><div class="how-i">🔥</div><div class="how-t">Grad-CAM</div><div class="how-d">Heatmap shows model attention.</div></div>
+      <div class="how-card"><div class="how-n">04</div><div class="how-i">📄</div><div class="how-t">PDF Report</div><div class="how-d">Download full diagnosis report.</div></div>
+    </div>
+  </div>
+
+  <div class="disc">
+    <span>⚠️</span>
+    <span><strong style="color:#dde4f0">Medical Disclaimer:</strong> NeuraScan AI is for academic research and educational purposes only. NOT a certified medical device. All results must be reviewed by a qualified neurologist or radiologist.</span>
+  </div>
+
+</div>
+
+<footer>
+  © 2026 <b>NeuraScan AI</b> · Trimester 8 Project · For Academic Use Only
+  <div class="credit">Developed by <span>Sanghita Roy</span></div>
+</footer>
+
+<script>
+const fi  = document.getElementById('fi');
+const dz  = document.getElementById('dz');
+const dc  = document.getElementById('dc');
+const pv  = document.getElementById('pv');
+const pi  = document.getElementById('pi');
+const pn  = document.getElementById('pn');
+const sb  = document.getElementById('sb');
+const chg = document.getElementById('chgBtn');
+
+fi.addEventListener('change', e => { const f = e.target.files[0]; if (f) show(f); });
+
+dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('over'); });
+dz.addEventListener('dragleave', ()  => dz.classList.remove('over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('over');
+  const f = e.dataTransfer.files[0];
+  if (!f) return;
+  const ok = ['image/jpeg','image/png','image/jpg','image/bmp'];
+  if (!ok.includes(f.type) && !f.name.match(/\.(jpg|jpeg|png|bmp)$/i)) {
+    alert('Please upload a JPG or PNG image.'); return;
+  }
+  const dt = new DataTransfer(); dt.items.add(f); fi.files = dt.files; show(f);
+});
+
+function show(f) {
+  const r = new FileReader();
+  r.onload = ev => {
+    pi.src = ev.target.result;
+    pn.textContent = f.name + ' (' + (f.size/1024).toFixed(0) + ' KB)';
+    dc.style.display = 'none';
+    pv.style.display = 'flex';
+    dz.classList.add('loaded');
+    sb.disabled = false;
+  };
+  r.readAsDataURL(f);
+}
+
+chg.addEventListener('click', e => {
+  e.stopPropagation();
+  fi.value = '';
+  dc.style.display = 'block';
+  pv.style.display = 'none';
+  dz.classList.remove('loaded');
+  sb.disabled = true;
+});
+
+document.getElementById('frm').addEventListener('submit', function(e) {
+  if (!fi.files || !fi.files[0]) { e.preventDefault(); alert('Please select an MRI image first.'); return; }
+  sb.disabled = true;
+  document.getElementById('ld').classList.add('on');
+  const ids = ['s1','s2','s3','s4','s5','s6','s7','s8'];
+  const ms  = [300, 800,1300,1800,2300,2900,3500,4000];
+  ids.forEach((id,i) => setTimeout(() => {
+    if (i > 0) { const p = document.getElementById(ids[i-1]); if(p) p.className='ls d'; }
+    const c = document.getElementById(id); if(c) c.className='ls a';
+  }, ms[i]));
+});
+</script>
+</body>
+</html>

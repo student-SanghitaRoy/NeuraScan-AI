@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environments
+venv/
+env/
+ENV/
+.venv/
+
+# VS Code
+.vscode/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Environment Variables
+.env
+
+# Database
+*.db
+*.sqlite3
+
+# Logs
+*.log
+
+# Generated Reports
+static/reports/*
+!static/reports/.gitkeep
+
+# Uploaded Images
+static/uploads/*
+!static/uploads/.gitkeep
+
+# GradCAM Outputs
+static/gradcam/*
+!static/gradcam/.gitkeep
+
+# Build Files
+build/
+dist/
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Mac
+.DS_Store
+
+.idea/
