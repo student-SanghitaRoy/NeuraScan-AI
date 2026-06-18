@@ -6,7 +6,6 @@ Generates Grad-CAM heatmap overlay for an MRI image using VGG16.
 import os
 import uuid
 import numpy as np
-import cv2
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -97,11 +96,12 @@ def generate_gradcam_overlay(img_path, save_dir, alpha=0.45):
     batch = np.expand_dims(arr, 0)
 
     raw  = _gradcam(_get_model(), batch)
-    hm   = cv2.resize(
-        raw.astype(np.float32),
-        (P.IMAGE_SIZE, P.IMAGE_SIZE),
-        interpolation=cv2.INTER_CUBIC
-    )
+    # Resize the small heatmap (e.g. 6x6) up to full image size using
+    # Pillow instead of cv2, to avoid a system-library dependency
+    # (libxcb etc.) that some minimal server environments don't have.
+    raw_img = Image.fromarray(raw.astype(np.float32), mode='F')
+    hm_img  = raw_img.resize((P.IMAGE_SIZE, P.IMAGE_SIZE), resample=Image.BICUBIC)
+    hm      = np.array(hm_img, dtype=np.float32)
     hm   = np.clip(hm, 0, 1)
 
     THRESHOLD = 0.10
@@ -116,13 +116,11 @@ def generate_gradcam_overlay(img_path, save_dir, alpha=0.45):
     hm_file = f'{uid}_heatmap.jpg'
     ov_file = f'{uid}_overlay.jpg'
 
-    cv2.imwrite(
-        os.path.join(save_dir, hm_file),
-        cv2.cvtColor((jet * 255).astype(np.uint8), cv2.COLOR_RGB2BGR)
+    Image.fromarray((jet * 255).astype(np.uint8)).save(
+        os.path.join(save_dir, hm_file)
     )
-    cv2.imwrite(
-        os.path.join(save_dir, ov_file),
-        cv2.cvtColor((overlay * 255).astype(np.uint8), cv2.COLOR_RGB2BGR)
+    Image.fromarray((overlay * 255).astype(np.uint8)).save(
+        os.path.join(save_dir, ov_file)
     )
 
     return {
