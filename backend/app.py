@@ -9,6 +9,14 @@ import sqlite3
 import datetime
 import traceback
 
+
+os.environ.setdefault('TF_NUM_INTRAOP_THREADS', '1')
+os.environ.setdefault('TF_NUM_INTEROP_THREADS', '1')
+os.environ.setdefault('OMP_NUM_THREADS', '1')
+# Disable oneDNN custom ops - saves some memory/startup overhead and the
+# numerical differences they introduce aren't needed for this use case.
+os.environ.setdefault('TF_ENABLE_ONEDNN_OPTS', '0')
+
 from flask import Flask, render_template, request, jsonify, send_from_directory
 from werkzeug.utils import secure_filename
 

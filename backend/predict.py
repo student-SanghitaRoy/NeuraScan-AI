@@ -37,7 +37,24 @@ _models = {}
 
 
 def _force_float32_policy(model):
-    
+    """
+    Models trained in the notebook used tf.keras.mixed_precision.set_global_policy
+    ('mixed_float16'). That per-layer dtype policy gets serialized into the saved
+    .keras file, so EVERY layer (including the nested VGG16/ResNet50/EfficientNet
+    base) keeps computing in float16 forever, even if this Flask process never
+    sets any mixed precision policy itself.
+
+    On CPU (no AVX-512 float16 support -> TensorFlow falls back to a slower,
+    less precise Eigen path) this float16 compute path causes gradients computed
+    via tf.GradientTape (as used for Grad-CAM) to underflow to ~0, which is why
+    the resulting heatmap collapses to a flat, uniform image and tumour area
+    rounds to 0.0%. Predictions still "work" because predict() only needs the
+    final softmax probabilities, which tolerate the precision loss far better
+    than raw gradients do.
+
+    Forcing every layer's dtype policy to float32 after loading fixes this for
+    both prediction and Grad-CAM, with no change to model weights or accuracy.
+    """
     for layer in model.layers:
         try:
             layer.dtype_policy = tf.keras.mixed_precision.Policy('float32')
@@ -70,7 +87,14 @@ def load_models(model_dir):
         if os.path.exists(path):
             print(f'  Loading {name} ...', flush=True)
             m = tf.keras.models.load_model(path, compile=False)
-            _force_float32_policy(m)
+            if name == 'vgg16':
+                # Only VGG16 needs float32: gradcam.py computes Grad-CAM
+                # gradients against it specifically, and float16 gradients
+                # underflow on CPU (see _force_float32_policy docstring).
+                # ResNet50 is only used for forward-pass prediction, which
+                # works fine at its native lower-memory precision, so we
+                # leave it alone to save RAM on memory-constrained hosts.
+                _force_float32_policy(m)
             loaded[name] = m
             print(f'  OK {name}', flush=True)
         else:
