@@ -320,7 +320,7 @@ footer b{color:#38b2ff}
 
       <!-- Models -->
       <div class="panel">
-        <div class="pt">Ensemble Configuration</div>
+        <div class="pt">{{ 'Ensemble Configuration' if result.models_used | length > 1 else 'Model Configuration' }}</div>
         <div class="mods">
           {% for m in result.models_used %}
           <div class="mbox">
@@ -330,7 +330,11 @@ footer b{color:#38b2ff}
           {% endfor %}
         </div>
         <p style="font-size:13px;color:#7a8fa6;margin-top:12px;line-height:1.6">
+          {% if result.models_used | length > 1 %}
           Soft-voting: final prediction = average of {{ result.models_used | length }} softmax outputs.
+          {% else %}
+          Single-model inference: final prediction = softmax output of {{ result.models_used[0].upper() }}.
+          {% endif %}
         </p>
       </div>
     </div>

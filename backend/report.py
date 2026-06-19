@@ -48,7 +48,7 @@ def generate_report(orig_path, overlay_path, result, save_dir,
     pdf.cell(210, 10, 'BRAIN TUMOUR AI DETECTION REPORT', align='C')
     pdf.set_font('Arial', '', 10)
     pdf.set_xy(0, 17)
-    pdf.cell(210, 8, 'VGG16 + ResNet50 Ensemble | Research Use Only', align='C')
+    pdf.cell(210, 8, 'VGG16 | Research Use Only', align='C')
     pdf.set_text_color(0, 0, 0)
     pdf.ln(22)
 
