@@ -5,11 +5,15 @@ app.py  —  NeuraScan AI Flask server
 
 import os
 import uuid
+import gc
 import sqlite3
 import datetime
 import traceback
 
-
+# Limit TensorFlow's internal thread pools before TF is imported anywhere.
+# On memory-constrained hosts (e.g. Render free tier, 512MB), TF's default
+# thread pool count can add meaningful overhead with no real benefit on a
+# single-worker, low-concurrency deployment like this one.
 os.environ.setdefault('TF_NUM_INTRAOP_THREADS', '1')
 os.environ.setdefault('TF_NUM_INTEROP_THREADS', '1')
 os.environ.setdefault('OMP_NUM_THREADS', '1')
@@ -263,13 +267,13 @@ def do_predict():
         result = P.predict(img_path)
 
         # 5. Generate Grad-CAM
-        gc = GC.generate_gradcam_overlay(img_path, GRADCAM_DIR)
-        result['area_pct']         = gc['area_pct']
-        result['heatmap_filename'] = gc['heatmap_filename']
-        result['overlay_filename'] = gc['overlay_filename']
+        gc_result = GC.generate_gradcam_overlay(img_path, GRADCAM_DIR)
+        result['area_pct']         = gc_result['area_pct']
+        result['heatmap_filename'] = gc_result['heatmap_filename']
+        result['overlay_filename'] = gc_result['overlay_filename']
 
         # 6. Generate PDF
-        ov_path = os.path.join(GRADCAM_DIR, gc['overlay_filename'])
+        ov_path = os.path.join(GRADCAM_DIR, gc_result['overlay_filename'])
         report_fname = RP.generate_report(
             orig_path    = img_path,
             overlay_path = ov_path,
@@ -294,10 +298,18 @@ def do_predict():
         except OSError:
             pass
 
+        gc.collect()  # free whatever partial work was allocated before the failure
+
         return render_template(
             'index.html',
             error='Analysis failed while processing your scan. Please try a different image or try again shortly.'
         )
+
+    # Free memory between requests - this is a single-worker deployment on a
+    # memory-constrained host, so promptly releasing what this request used
+    # (model activations, image arrays, etc.) before the next request arrives
+    # matters more than it would on a larger instance.
+    gc.collect()
 
     # 8. Sort probs highest first for display
     sorted_probs = sorted(result['probs'].items(), key=lambda x: x[1], reverse=True)

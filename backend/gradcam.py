@@ -5,6 +5,7 @@ Generates Grad-CAM heatmap overlay for an MRI image using VGG16.
 
 import os
 import uuid
+import gc
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
@@ -16,7 +17,20 @@ import predict as P
 
 
 def _get_model():
-    
+    """
+    _gradcam() below is hardcoded to VGG16's specific layer names
+    (block1_conv1...block5_conv3) and layer indices (model.layers[2:7]
+    = Flatten/Dropout/Dense/Dropout/Softmax). It will NOT work correctly
+    against ResNet50 or any other architecture - it would either raise
+    inside the try/except below or, worse, silently return a flat zero
+    heatmap that looks like a "successful but boring" result instead of
+    an obvious error.
+
+    So this function deliberately does NOT fall back to "any available
+    model" the way it used to. If VGG16 isn't loaded, Grad-CAM cannot
+    run and should fail clearly rather than produce a misleading flat
+    heatmap with 0.0% area.
+    """
     if 'vgg16' not in P._models:
         raise RuntimeError(
             "Grad-CAM requires the VGG16 model, but it is not loaded "
@@ -73,6 +87,15 @@ def _gradcam(model, batch):
 
     grads = tape.gradient(loss, conv_out)
 
+    # GradientTape retains every intermediate activation from all 13
+    # conv/pool layers it recorded above until it's garbage collected.
+    # On a memory-constrained host, waiting for Python's normal GC cycle
+    # is too slow - explicitly drop the tape and large intermediates now
+    # so that memory is actually freed before the rest of the request
+    # (predict() forward pass, PDF generation, etc.) needs it.
+    del tape, conv1, conv2, p1, c21, c22, p2, c31, c32, c33, p3, c41, c42, c43, p4, c51, c52, p5, y
+    gc.collect()
+
     if grads is None:
         print("GradCAM Error: gradient is None (conv_out not connected to loss)")
         return np.zeros((6, 6), dtype=np.float32)
@@ -85,7 +108,10 @@ def _gradcam(model, batch):
     if tf.reduce_max(heatmap) > 0:
         heatmap /= tf.reduce_max(heatmap)
 
-    return heatmap.numpy()
+    result = heatmap.numpy()
+    del conv_out, grads, pooled_grads, heatmap
+    gc.collect()
+    return result
 
 
 def generate_gradcam_overlay(img_path, save_dir, alpha=0.45):
@@ -122,6 +148,9 @@ def generate_gradcam_overlay(img_path, save_dir, alpha=0.45):
     Image.fromarray((overlay * 255).astype(np.uint8)).save(
         os.path.join(save_dir, ov_file)
     )
+
+    del raw, raw_img, hm_img, hm, mask, jet, overlay, arr, img, batch
+    gc.collect()
 
     return {
         'heatmap_filename': hm_file,
