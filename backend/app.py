@@ -10,17 +10,6 @@ import sqlite3
 import datetime
 import traceback
 
-# Limit TensorFlow's internal thread pools before TF is imported anywhere.
-# On memory-constrained hosts (e.g. Render free tier, 512MB), TF's default
-# thread pool count can add meaningful overhead with no real benefit on a
-# single-worker, low-concurrency deployment like this one.
-os.environ.setdefault('TF_NUM_INTRAOP_THREADS', '1')
-os.environ.setdefault('TF_NUM_INTEROP_THREADS', '1')
-os.environ.setdefault('OMP_NUM_THREADS', '1')
-# Disable oneDNN custom ops - saves some memory/startup overhead and the
-# numerical differences they introduce aren't needed for this use case.
-os.environ.setdefault('TF_ENABLE_ONEDNN_OPTS', '0')
-
 from flask import Flask, render_template, request, jsonify, send_from_directory
 from werkzeug.utils import secure_filename
 
