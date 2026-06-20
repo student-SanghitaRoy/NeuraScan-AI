@@ -12,6 +12,34 @@ IMAGE_SIZE   = 96
 CLASS_LABELS = ['glioma', 'meningioma', 'notumor', 'pituitary']
 NUM_CLASSES  = 4
 
+# ── NON-MRI IMAGE REJECTION THRESHOLDS ───────────────────────────────────────
+# Brain MRI scans are essentially grayscale (R≈G≈B per pixel). A colour photo
+# of an everyday object will have much higher per-pixel channel deviation.
+# This threshold was tuned against synthetic colour-vs-grayscale test images;
+# real JPEG compression can introduce a few units of noise even in genuinely
+# grayscale scans, so this leaves headroom rather than using 0.
+GRAYSCALE_DEVIATION_THRESHOLD = 10.0
+
+# The model always outputs a full softmax distribution, even for images it
+# has never seen anything like. On genuinely out-of-distribution input it
+# tends to produce a low, close-to-uniform spread across all 4 classes
+# (no real learned signal to latch onto), rather than a confident, decisive
+# call. Confidence below this on the winning class is treated as "the model
+# isn't sure this is even a brain scan", not just "uncertain about which
+# tumour type". Real brain MRI test scans consistently scored 90-100%
+# confidence, so this threshold still leaves real scans comfortable margin
+# while catching uncertain/wrong-domain input much more aggressively.
+MIN_CONFIDENCE_THRESHOLD = 65.0
+
+# Shannon entropy of the 4-class probability distribution, in bits.
+# Max possible entropy for 4 classes (perfectly uniform 25/25/25/25) is 2.0
+# bits. A confident, decisive prediction has LOW entropy even if it isn't
+# the only signal — e.g. [55%,30%,10%,5%] passes a 65% confidence bar by
+# being just under it but is still a fairly spread-out, uncertain-looking
+# distribution; entropy catches that shape directly rather than relying on
+# the single winning-class number alone.
+MAX_ENTROPY_THRESHOLD = 1.0
+
 RISK_MAP = {
     'glioma':     {'level': 'High',   'color': '#e74c3c', 'icon': '🔴'},
     'meningioma': {'level': 'Medium', 'color': '#f39c12', 'icon': '🟡'},
@@ -34,6 +62,34 @@ CLASS_DESC = {
 }
 
 _models = {}
+
+
+class NotBrainMRIError(Exception):
+    """Raised when the uploaded image doesn't look like a brain MRI scan."""
+    pass
+
+
+def _grayscale_deviation(arr):
+    """
+    arr: float32 HxWx3 array, values 0-255 range.
+    Returns the average per-pixel deviation of each channel from the
+    pixel's mean — near 0 for true grayscale images, much higher for
+    colour photos.
+    """
+    r, g, b = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
+    mean = (r + g + b) / 3.0
+    deviation = (np.abs(r - mean) + np.abs(g - mean) + np.abs(b - mean)) / 3.0
+    return float(np.mean(deviation))
+
+
+def _entropy_bits(probs):
+    """
+    Shannon entropy of a probability distribution, in bits.
+    0.0 = fully confident (one class at 100%). Higher = more spread out/
+    uncertain across classes. Max for 4 classes (uniform 25% each) is 2.0.
+    """
+    p = np.clip(probs, 1e-12, 1.0)  # avoid log(0)
+    return float(-np.sum(p * np.log2(p)))
 
 
 def _force_float32_policy(model):
@@ -112,7 +168,16 @@ def predict(img_path):
         raise RuntimeError('Models not loaded.')
 
     img = Image.open(img_path).convert('RGB').resize((IMAGE_SIZE, IMAGE_SIZE))
-    arr = np.array(img, dtype=np.float32) / 255.0
+    arr_raw = np.array(img, dtype=np.float32)  # 0-255 range, for the grayscale check
+
+    deviation = _grayscale_deviation(arr_raw)
+    if deviation > GRAYSCALE_DEVIATION_THRESHOLD:
+        raise NotBrainMRIError(
+            'This image doesn\'t look like a grayscale brain MRI scan '
+            '(too much colour variation). Please upload a brain MRI image.'
+        )
+
+    arr = arr_raw / 255.0
     batch = np.expand_dims(arr, axis=0)
 
     probs = np.zeros(NUM_CLASSES, dtype=np.float64)
@@ -124,6 +189,15 @@ def predict(img_path):
     idx        = int(np.argmax(probs))
     pred_class = CLASS_LABELS[idx]
     confidence = round(float(probs[idx]) * 100.0, 2)
+    entropy    = _entropy_bits(probs)
+
+    if confidence < MIN_CONFIDENCE_THRESHOLD or entropy > MAX_ENTROPY_THRESHOLD:
+        raise NotBrainMRIError(
+            'This image doesn\'t look like a brain MRI scan the model '
+            'recognises (confidence too low / distribution too uncertain '
+            'across categories). Please upload a clear brain MRI image.'
+        )
+
     risk       = RISK_MAP[pred_class]
 
     return {
