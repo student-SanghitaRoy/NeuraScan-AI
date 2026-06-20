@@ -288,6 +288,22 @@ def do_predict():
         if not save_prediction(patient_name, patient_id, img_fname, result, report_fname):
             print(f'Warning: prediction for {img_fname} was not logged to history DB')
 
+    except P.NotBrainMRIError as e:
+        print('Rejected non-MRI upload:', e)
+
+        try:
+            if os.path.exists(img_path):
+                os.remove(img_path)
+        except OSError:
+            pass
+
+        gc.collect()
+
+        return render_template(
+            'index.html',
+            error=str(e)
+        )
+
     except Exception as e:
         print('Prediction pipeline error:', e)
         traceback.print_exc()
