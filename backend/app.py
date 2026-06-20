@@ -233,6 +233,8 @@ def index():
 
 @app.route('/predict', methods=['POST'])
 def do_predict():
+    print(f'[{datetime.datetime.now().isoformat()}] predict: route entered', flush=True)
+
     # 1. Check file was uploaded
     if 'mri_file' not in request.files:
         return render_template('index.html', error='No file uploaded. Please select an MRI image.')
@@ -257,6 +259,7 @@ def do_predict():
 
     try:
         f.save(img_path)
+        print(f'[{datetime.datetime.now().isoformat()}] predict: file saved to {img_path}', flush=True)
     except Exception as e:
         print('Upload save error:', e)
         traceback.print_exc()
@@ -264,15 +267,23 @@ def do_predict():
 
     try:
         # 4. Run prediction
+        print(f'[{datetime.datetime.now().isoformat()}] predict: starting P.predict()', flush=True)
+        t0 = datetime.datetime.now()
         result = P.predict(img_path)
+        print(f'[{datetime.datetime.now().isoformat()}] predict: P.predict() done in {(datetime.datetime.now()-t0).total_seconds():.2f}s', flush=True)
 
         # 5. Generate Grad-CAM
+        print(f'[{datetime.datetime.now().isoformat()}] predict: starting GC.generate_gradcam_overlay()', flush=True)
+        t0 = datetime.datetime.now()
         gc_result = GC.generate_gradcam_overlay(img_path, GRADCAM_DIR)
+        print(f'[{datetime.datetime.now().isoformat()}] predict: generate_gradcam_overlay() done in {(datetime.datetime.now()-t0).total_seconds():.2f}s', flush=True)
         result['area_pct']         = gc_result['area_pct']
         result['heatmap_filename'] = gc_result['heatmap_filename']
         result['overlay_filename'] = gc_result['overlay_filename']
 
         # 6. Generate PDF
+        print(f'[{datetime.datetime.now().isoformat()}] predict: starting RP.generate_report()', flush=True)
+        t0 = datetime.datetime.now()
         ov_path = os.path.join(GRADCAM_DIR, gc_result['overlay_filename'])
         report_fname = RP.generate_report(
             orig_path    = img_path,
@@ -282,6 +293,7 @@ def do_predict():
             patient_name = patient_name,
             patient_id   = patient_id,
         )
+        print(f'[{datetime.datetime.now().isoformat()}] predict: generate_report() done in {(datetime.datetime.now()-t0).total_seconds():.2f}s', flush=True)
 
         # 7. Save to DB (logged but non-fatal if it fails — the user still gets their result)
         if not save_prediction(patient_name, patient_id, img_fname, result, report_fname):
