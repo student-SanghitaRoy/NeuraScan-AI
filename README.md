@@ -79,7 +79,7 @@ This project demonstrates a complete, end-to-end deep learning pipeline — from
 ## 📂 Project Structure
 
 ```
-NeuraScan-AI/
+BRAINTUMOURDETECTOR/
 │
 ├── backend/
 │   ├── app.py
@@ -94,12 +94,12 @@ NeuraScan-AI/
 │   └── result.html
 │
 ├── static/
-│   ├── favicon.png
+│   ├── favicon.svg
 │   ├── uploads/
 │   ├── gradcam/
 │   └── reports/
 │
-├── dataset/
+├── Brain MRI Dataset
 │
 ├── Dockerfile
 ├── Procfile
@@ -140,7 +140,7 @@ PDF Report Generation → Results Displayed in Web Interface
 
 ## 👩‍💻 Project Information
 
-- **Project Title:** NeuraScan AI — Brain Tumour Detection
+- **Project Title:** NeuraScan AI — Brain Tumour Detector
 - **Author Name:** Sanghita Roy
 - **Roll Number:** 23035010421
 - **Program:** B.Sc. (Hons.) Data Science & Artificial Intelligence
